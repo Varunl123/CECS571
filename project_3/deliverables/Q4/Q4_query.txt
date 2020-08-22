@@ -1,0 +1,17 @@
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX ds: <https://data.medicare.gov/d/nrth-mfg3#>
+
+SELECT ?name ?score ?spending ?stateAvgScore ?stateSpending (?spending / ?score as ?ratio)
+WHERE {
+  ?hospital ds:hasState ?state.
+  ?state ds:hasStateName ?stateName.
+  ?hospital ds:hasFacilityName ?name.
+  ?hospital ds:hasHospitalAverageMedicareSpending ?spending.
+  ?hospital ds:hasScore ?score.
+  ?state ds:hasStateAverageMedicareSpending ?stateSpending.
+}
+ORDER BY DESC(?ratio)
+LIMIT 10

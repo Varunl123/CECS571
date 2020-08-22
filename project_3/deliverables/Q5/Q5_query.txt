@@ -1,0 +1,45 @@
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX ds: <https://data.medicare.gov/d/nrth-mfg3#>
+
+SELECT ?stateName (ROUND(?efficient_count * 100 / ?total) AS ?percent) ?efficient_count ?total
+WHERE {
+  {
+    # This is to find # efficent hospitals in each state
+    SELECT ?stateName (COUNT(?efficient) AS ?efficient_count)
+    WHERE {
+      ?efficient ds:hasHospitalAverageMedicareSpending ?hSpending.
+      ?efficient ds:hasScore ?hScore.
+      ?efficient ds:hasState ?state.
+      ?state ds:hasStateName ?stateName.
+      ?state ds:hasStateAverageMedicareSpending ?sSpending.
+      
+  	  # This is to find out the state average score 
+      {
+        SELECT (AVG(?innerScore) AS ?stateAvgScore) 
+        WHERE {
+            ?hospital ds:hasState ?state.
+          	?state ds:hasStateName ?stateName.
+            ?hospital ds:hasScore ?innerScore.
+         }
+  	  }
+      
+      # Filter out by comparison
+      FILTER(?hSpending < ?sSpending && ?hScore > ?stateAvgScore)
+    }
+    GROUP BY ?stateName
+  }
+  
+  # This block is to find the total # hospitals in each state
+  {
+    SELECT ?stateName (COUNT(?hospital) AS ?total)
+    WHERE {
+        ?hospital ds:hasState ?state.
+      	?state ds:hasStateName ?stateName.
+    }
+    GROUP BY (?stateName)
+  }
+}
+ORDER BY DESC(?percent)
